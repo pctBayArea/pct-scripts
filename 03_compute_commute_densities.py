@@ -25,13 +25,18 @@ else:
         if index == 0:
             flowData = pandas.read_csv(files, dtype={'orig_code':str, 'dest_code':str})
         else:
-            tempData = pandas.read_csv(files, dtype={'orig_code':str, 'dest_code':str})
-
-            flowData = pandas.concat([flowData, tempData], ignore_index=True)
+            fD       = pandas.read_csv(files, dtype={'orig_code':str, 'dest_code':str})
+            flowData = pandas.concat([flowData, fD], ignore_index=True)
 
 # Organize data
     flowData = flowData[['orig_code', 'dest_code', 'all', 'car.1p', 'bicycle']]
     flowData.rename(columns = {'orig_code':'ORIG_TAZ', 'dest_code':'DEST_TAZ', 'all':'ALL', 'car.1p':'SOV', 'bicycle':'BIKE'}, inplace = True)
+
+# Add return data for commute trips per day
+    fD = flowData.copy()
+    fD = fD[['DEST_TAZ', 'ORIG_TAZ', 'ALL', 'SOV', 'BIKE']]
+    fD.rename(columns = {'DEST_TAZ':'ORIG_TAZ', 'ORIG_TAZ':'DEST_TAZ'}, inplace = True)
+    flowData = pandas.concat([flowData, fD], ignore_index=True)
 
 # Read TAZ data
     taz = pandas.read_pickle(inDir + '01_geographies/bayArea_taz.pkl')
@@ -79,6 +84,9 @@ else:
     taz['BIKE'] /= taz['ALL']
     taz['SOV']  /= taz['ALL']
 
+    taz['BIKE'] = taz['BIKE'].fillna(0.0)
+    taz['SOV'] = taz['SOV'].fillna(0.0)
+
     taz.to_pickle('taz.pkl')
 
 ################################################################################
@@ -101,21 +109,32 @@ for placefp in place.iterrows():
 place['BIKE'] /= place['ALL']
 place['SOV']  /= place['ALL']
 
-place.to_file(outDir + 'bayArea_place.GeoJson', driver='GeoJSON')
+place['BIKE'] = place['BIKE'].fillna(0.0)
+place['SOV'] = place['SOV'].fillna(0.0)
+
+place.to_crs('EPSG:4326').to_file(outDir + 'bayArea_place.GeoJson', driver='GeoJSON')
 place.to_pickle(outDir + 'bayArea_place.pkl')
 
 # Organize per place
 for placefp in place.iterrows():
-    tz = taz.loc[(taz['PLACEFP'] == placefp[0])]
+    tz = taz.loc[(taz['PLACEFP'] == placefp[0])].copy()
     if not tz.empty:
         name = place.loc[placefp[0], 'NAME']
         print(name)
+# filter out place
+        pc = place.loc[place['NAME'] != name]
         name = name.replace(" ","")
         path = outDir + 'place/' + name 
         if not os.path.isdir(path):
             os.mkdir(path)
-        
-        tz.to_file(path + '/taz.GeoJson', driver='GeoJSON')
+
+        tz['NAME'] = tz.index
+
+# Remove NaN (COUNTYFP)
+        tz = tz[['PLACEFP', 'NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
+
+        tz.to_crs('EPSG:4326').to_file(path + '/taz.GeoJson', driver='GeoJSON')
+        pc.to_crs('EPSG:4326').to_file(path + '/place.GeoJson', driver='GeoJSON')
 
 ################################################################################
 
@@ -137,20 +156,31 @@ for countyfp in county.iterrows():
 county['BIKE'] /= county['ALL']
 county['SOV']  /= county['ALL']
 
-county.to_file(outDir + 'bayArea_county.GeoJson', driver='GeoJSON')
+county['BIKE'] = county['BIKE'].fillna(0.0)
+county['SOV'] = county['SOV'].fillna(0.0)
+
+county.to_crs('EPSG:4326').to_file(outDir + 'bayArea_county.GeoJson', driver='GeoJSON')
 county.to_pickle(outDir + 'bayArea_county.pkl')
 
 # Organize per county
 for countyfp in county.iterrows():
-    tz = taz.loc[(taz['COUNTYFP'] == countyfp[0])]
+    tz = taz.loc[(taz['COUNTYFP'] == countyfp[0])].copy()
     if not tz.empty:
         name = county.loc[countyfp[0], 'NAME']
         print(name)
+# filter out county
+        ct = county.loc[county['NAME'] != name]
         name = name.replace(" ","")
         path = outDir + 'county/' + name 
         if not os.path.isdir(path):
             os.mkdir(path)
         
-        tz.to_file(path + '/taz.GeoJson', driver='GeoJSON')
+        tz['NAME'] = tz.index
+
+# Remove NaN (PLACEFP)
+        tz = tz[['COUNTYFP', 'NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
+
+        tz.to_crs('EPSG:4326').to_file(path + '/taz.GeoJson', driver='GeoJSON')
+        ct.to_crs('EPSG:4326').to_file(path + '/county.GeoJson', driver='GeoJSON')
 
 ################################################################################
