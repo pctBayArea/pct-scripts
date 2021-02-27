@@ -131,7 +131,11 @@ for placefp in place.iterrows():
         tz['NAME'] = tz.index
 
 # Remove NaN (COUNTYFP)
-        tz = tz[['PLACEFP', 'NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
+        tz = tz[['NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
+        pc = pc[['NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
+        
+        tz['geometry'] = tz['geometry'].simplify(1.0)
+        pc['geometry'] = pc['geometry'].simplify(10.0)
 
         tz.to_crs('EPSG:4326').to_file(path + '/taz.GeoJson', driver='GeoJSON')
         pc.to_crs('EPSG:4326').to_file(path + '/place.GeoJson', driver='GeoJSON')
@@ -178,7 +182,11 @@ for countyfp in county.iterrows():
         tz['NAME'] = tz.index
 
 # Remove NaN (PLACEFP)
-        tz = tz[['COUNTYFP', 'NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
+        tz = tz[['NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
+        ct = ct[['NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
+        
+        tz['geometry'] = tz['geometry'].simplify(1.0)
+        ct['geometry'] = ct['geometry'].simplify(10.0)
 
         tz.to_crs('EPSG:4326').to_file(path + '/taz.GeoJson', driver='GeoJSON')
         ct.to_crs('EPSG:4326').to_file(path + '/county.GeoJson', driver='GeoJSON')
