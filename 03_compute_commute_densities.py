@@ -2,193 +2,207 @@
 
 import os
 import glob
-import pandas
 import numpy as np
+import pandas as pd
 
-inDir = os.path.expanduser('../pct-inputs/02_intermediate/')
-outDir = os.path.expanduser('../pct-outputs/commute/')
+inDir = os.path.expanduser("../pct-inputs/02_intermediate/")
+outDir = os.path.expanduser("../pct-outputs/commute/")
 
 ################################################################################
 
-if os.path.isfile('flowData.pkl'):
-    print('Read flowData pickle')
+if os.path.isfile("flow_data.pkl"):
+    print("Read flow_data pickle")
 # Read pickle
-    flowData = pandas.read_pickle('flowData.pkl')
+    flow_data = pd.read_pickle("flow_data.pkl")
 
-# Read TAZ data
-    taz = pandas.read_pickle(inDir + '01_geographies/bayArea_taz.pkl')
+# Read taz data
+    taz = pd.read_pickle(inDir + "01_geographies/bayArea_taz.pkl")
 else:
-    print('Compute flowData')
+    print("Compute flow_data")
 # Read flow data
-    fileList = glob.glob(inDir + '02_travel_data/commute/taz/*.csv')
-    for index, files in enumerate(fileList):
+    file_list = glob.glob(inDir + "02_travel_data/commute/taz/*.csv")
+    for index, files in enumerate(file_list):
         if index == 0:
-            flowData = pandas.read_csv(files, dtype={'orig_code':str, 'dest_code':str})
+            flow_data = pd.read_csv(files, dtype={"orig_code":str, "dest_code":str})
         else:
-            fD       = pandas.read_csv(files, dtype={'orig_code':str, 'dest_code':str})
-            flowData = pandas.concat([flowData, fD], ignore_index=True)
+            fD       = pd.read_csv(files, dtype={"orig_code":str, "dest_code":str})
+            flow_data = pd.concat([flow_data, fD], ignore_index=True)
 
 # Organize data
-    flowData = flowData[['orig_code', 'dest_code', 'all', 'car.1p', 'bicycle']]
-    flowData.rename(columns = {'orig_code':'ORIG_TAZ', 'dest_code':'DEST_TAZ', 'all':'ALL', 'car.1p':'SOV', 'bicycle':'BIKE'}, inplace = True)
+    flow_data = flow_data[["orig_code", "dest_code", "all", "car_1p", "bicycle"]]
+    flow_data.rename(columns = {"orig_code":"orig_taz", "dest_code":"dest_taz", "all":"all", "car_1p":"sov", "bicycle":"bike"}, inplace = True)
 
 # Add return data for commute trips per day
-    fD = flowData.copy()
-    fD = fD[['DEST_TAZ', 'ORIG_TAZ', 'ALL', 'SOV', 'BIKE']]
-    fD.rename(columns = {'DEST_TAZ':'ORIG_TAZ', 'ORIG_TAZ':'DEST_TAZ'}, inplace = True)
-    flowData = pandas.concat([flowData, fD], ignore_index=True)
+    fD = flow_data.copy()
+    fD = fD[["dest_taz", "orig_taz", "all", "sov", "bike"]]
+    fD.rename(columns = {"dest_taz":"orig_taz", "orig_taz":"dest_taz"}, inplace = True)
+    flow_data = pd.concat([flow_data, fD], ignore_index=True)
 
-# Read TAZ data
-    taz = pandas.read_pickle(inDir + '01_geographies/bayArea_taz.pkl')
+# Read taz data
+    taz = pd.read_pickle(inDir + "01_geographies/bayArea_taz.pkl")
 
-# Add COUNTY and PLACE codes to data frame
-    flowData['ORIG_CNT'] = ''
-    flowData['DEST_CNT'] = ''
-    flowData['ORIG_PLC'] = ''
-    flowData['DEST_PLC'] = ''
+# Add county and place codes to data frame. This data is used to compute mode
+# share in counties and places
+    flow_data["orig_cnt"] = ""
+    flow_data["dest_cnt"] = ""
+    flow_data["orig_plc"] = ""
+    flow_data["dest_plc"] = ""
 
-# Fill in COUNTY and PLACE data frames
-    for fD in flowData.iterrows():
-        flowData.loc[fD[0], 'ORIG_CNT'] = taz.loc[flowData.loc[fD[0], 'ORIG_TAZ'], 'COUNTYFP']
-        flowData.loc[fD[0], 'DEST_CNT'] = taz.loc[flowData.loc[fD[0], 'DEST_TAZ'], 'COUNTYFP']
-        flowData.loc[fD[0], 'ORIG_PLC'] = taz.loc[flowData.loc[fD[0], 'ORIG_TAZ'], 'PLACEFP' ]
-        flowData.loc[fD[0], 'DEST_PLC'] = taz.loc[flowData.loc[fD[0], 'DEST_TAZ'], 'PLACEFP' ]
+    taz_cnt = taz.dropna(subset=["countyfp"])
 
-    flowData.to_pickle('flowData.pkl')
+    for i, tz in taz_cnt.iterrows():
+        cntfp = tz["countyfp"]
+
+        flow_data.loc[(flow_data["orig_taz"] == i), "orig_cnt"] = cntfp
+        flow_data.loc[(flow_data["dest_taz"] == i), "dest_cnt"] = cntfp
+
+    taz_plc = taz.dropna(subset=["placefp"])
+
+    for i, tz in taz_plc.iterrows():
+# We do not know the distribution of origins or destinations within a TAZ.
+# Therefore, add TAZ to place if more than 0.5 of its surface area is within
+# this place.
+        if (tz['area'] > 0.5):
+            plcfp = tz["placefp"]
+            
+            flow_data.loc[(flow_data["orig_taz"] == i), "orig_plc"] = plcfp
+            flow_data.loc[(flow_data["dest_taz"] == i), "dest_plc"] = plcfp
+
+    flow_data.to_pickle("flow_data.pkl")
 
 ################################################################################
 
-if os.path.isfile('taz.pkl'):
-    print('Read taz pickle')
+if os.path.isfile("taz.pkl"):
+    print("Read taz pickle")
 # Read pickle
-    taz = pandas.read_pickle('taz.pkl')
+    taz = pd.read_pickle("taz.pkl")
 else:
-    print('Compute taz')
+    print("Compute taz")
 # Add trip data to data frame
-    taz['ALL']  = 0.0
-    taz['SOV']  = 0.0
-    taz['BIKE'] = 0.0
+    taz["all"]  = 0.0
+    taz["sov"]  = 0.0
+    taz["bike"] = 0.0
 
-# Total number of commute trips in TAZ consistst of:
-# * trips that start and end in same TAZ
-# * trips that start elsewhere and end in TAZ
-# * trips that start in TAZ and end elsewhere
+# Total number of commute trips in taz consistst of:
+# * trips that start and end in same taz
+# * trips that start elsewhere and end in taz
+# * trips that start in taz and end elsewhere
 
     for tazce in taz.iterrows():
-        fD = flowData.loc[(flowData['ORIG_TAZ'] == tazce[0]) | (flowData['DEST_TAZ'] == tazce[0])]
+        fD = flow_data.loc[(flow_data["orig_taz"] == tazce[0]) | (flow_data["dest_taz"] == tazce[0])]
         if not fD.empty:
-            taz.loc[tazce[0], 'ALL']  = fD['ALL'].sum()
-            taz.loc[tazce[0], 'SOV']  = fD['SOV'].sum()
-            taz.loc[tazce[0], 'BIKE'] = fD['BIKE'].sum()
+            taz.loc[tazce[0], "all"]  = fD["all"].sum()
+            taz.loc[tazce[0], "sov"]  = fD["sov"].sum()
+            taz.loc[tazce[0], "bike"] = fD["bike"].sum()
 
-    taz['BIKE'] /= taz['ALL']
-    taz['SOV']  /= taz['ALL']
+    taz["bike"] /= taz["all"]
+    taz["sov"]  /= taz["all"]
 
-    taz['BIKE'] = taz['BIKE'].fillna(0.0)
-    taz['SOV'] = taz['SOV'].fillna(0.0)
+    taz["bike"] = taz["bike"].fillna(0.0)
+    taz["sov"] = taz["sov"].fillna(0.0)
 
-    taz.to_pickle('taz.pkl')
+    taz.to_pickle("taz.pkl")
 
 ################################################################################
 
 # Read place data
-place = pandas.read_pickle(inDir + '01_geographies/bayArea_place.pkl')
+place = pd.read_pickle(inDir + "01_geographies/bayArea_place.pkl")
 
 # Add trip data to data frame
-place['ALL']  = 0.0
-place['SOV']  = 0.0
-place['BIKE'] = 0.0
+place["all"]  = 0.0
+place["sov"]  = 0.0
+place["bike"] = 0.0
 
 for placefp in place.iterrows():
-    fD = flowData.loc[(flowData['ORIG_PLC'] == placefp[0]) | (flowData['DEST_PLC'] == placefp[0])]
+    fD = flow_data.loc[(flow_data["orig_plc"] == placefp[0]) | (flow_data["dest_plc"] == placefp[0])]
     if not fD.empty:
-        place.loc[placefp[0], 'ALL']  = fD['ALL'].sum()
-        place.loc[placefp[0], 'SOV']  = fD['SOV'].sum()
-        place.loc[placefp[0], 'BIKE'] = fD['BIKE'].sum()
+        place.loc[placefp[0], "all"]  = fD["all"].sum()
+        place.loc[placefp[0], "sov"]  = fD["sov"].sum()
+        place.loc[placefp[0], "bike"] = fD["bike"].sum()
 
-place['BIKE'] /= place['ALL']
-place['SOV']  /= place['ALL']
+place["bike"] /= place["all"]
+place["sov"]  /= place["all"]
 
-place['BIKE'] = place['BIKE'].fillna(0.0)
-place['SOV'] = place['SOV'].fillna(0.0)
+place["bike"] = place["bike"].fillna(0.0)
+place["sov"] = place["sov"].fillna(0.0)
 
-place.to_crs('EPSG:4326').to_file(outDir + 'bayArea_place.GeoJson', driver='GeoJSON')
-place.to_pickle(outDir + 'bayArea_place.pkl')
+place.to_crs("EPSG:4326").to_file(outDir + "bayArea_place.GeoJson", driver="GeoJSON")
+place.to_pickle(outDir + "bayArea_place.pkl")
 
 # Organize per place
 for placefp in place.iterrows():
-    tz = taz.loc[(taz['PLACEFP'] == placefp[0])].copy()
+    tz = taz.loc[(taz["placefp"] == placefp[0])].copy()
     if not tz.empty:
-        name = place.loc[placefp[0], 'NAME']
+        name = place.loc[placefp[0], "name"]
         print(name)
 # filter out place
-        pc = place.loc[place['NAME'] != name]
+        pc = place.loc[place["name"] != name]
         name = name.replace(" ","")
-        path = outDir + 'place/' + name 
+        path = outDir + "place/" + name 
         if not os.path.isdir(path):
             os.mkdir(path)
 
-        tz['NAME'] = tz.index
+        tz["name"] = tz.index
 
-# Remove NaN (COUNTYFP)
-        tz = tz[['NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
-        pc = pc[['NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
+# Remove NaN (countyfp)
+        tz = tz[["name", "all", "sov", "bike", "geometry"]]
+        pc = pc[["name", "all", "sov", "bike", "geometry"]]
         
-        tz['geometry'] = tz['geometry'].simplify(1.0)
-        pc['geometry'] = pc['geometry'].simplify(10.0)
+        tz["geometry"] = tz["geometry"].simplify(1.0)
+        pc["geometry"] = pc["geometry"].simplify(10.0)
 
-        tz.to_crs('EPSG:4326').to_file(path + '/taz.GeoJson', driver='GeoJSON')
-        pc.to_crs('EPSG:4326').to_file(path + '/place.GeoJson', driver='GeoJSON')
+        tz.to_crs("EPSG:4326").to_file(path + "/taz.GeoJson", driver="GeoJSON")
+        pc.to_crs("EPSG:4326").to_file(path + "/place.GeoJson", driver="GeoJSON")
 
 ################################################################################
 
 # Read county data
-county = pandas.read_pickle(inDir + '01_geographies/bayArea_county.pkl')
+county = pd.read_pickle(inDir + "01_geographies/bayArea_county.pkl")
 
 # Add trip data to data frame
-county['ALL']  = 0.0
-county['SOV']  = 0.0
-county['BIKE'] = 0.0
+county["all"]  = 0.0
+county["sov"]  = 0.0
+county["bike"] = 0.0
 
 for countyfp in county.iterrows():
-    fD = flowData.loc[(flowData['ORIG_CNT'] == countyfp[0]) | (flowData['DEST_CNT'] == countyfp[0])]
+    fD = flow_data.loc[(flow_data["orig_cnt"] == countyfp[0]) | (flow_data["dest_cnt"] == countyfp[0])]
     if not fD.empty:
-        county.loc[countyfp[0], 'ALL']  = fD['ALL'].sum()
-        county.loc[countyfp[0], 'SOV']  = fD['SOV'].sum()
-        county.loc[countyfp[0], 'BIKE'] = fD['BIKE'].sum()
+        county.loc[countyfp[0], "all"]  = fD["all"].sum()
+        county.loc[countyfp[0], "sov"]  = fD["sov"].sum()
+        county.loc[countyfp[0], "bike"] = fD["bike"].sum()
 
-county['BIKE'] /= county['ALL']
-county['SOV']  /= county['ALL']
+county["bike"] /= county["all"]
+county["sov"]  /= county["all"]
 
-county['BIKE'] = county['BIKE'].fillna(0.0)
-county['SOV'] = county['SOV'].fillna(0.0)
+county["bike"] = county["bike"].fillna(0.0)
+county["sov"] = county["sov"].fillna(0.0)
 
-county.to_crs('EPSG:4326').to_file(outDir + 'bayArea_county.GeoJson', driver='GeoJSON')
-county.to_pickle(outDir + 'bayArea_county.pkl')
+county.to_crs("EPSG:4326").to_file(outDir + "bayArea_county.GeoJson", driver="GeoJSON")
+county.to_pickle(outDir + "bayArea_county.pkl")
 
 # Organize per county
 for countyfp in county.iterrows():
-    tz = taz.loc[(taz['COUNTYFP'] == countyfp[0])].copy()
+    tz = taz.loc[(taz["countyfp"] == countyfp[0])].copy()
     if not tz.empty:
-        name = county.loc[countyfp[0], 'NAME']
+        name = county.loc[countyfp[0], "name"]
         print(name)
 # filter out county
-        ct = county.loc[county['NAME'] != name]
+        ct = county.loc[county["name"] != name]
         name = name.replace(" ","")
-        path = outDir + 'county/' + name 
+        path = outDir + "county/" + name 
         if not os.path.isdir(path):
             os.mkdir(path)
         
-        tz['NAME'] = tz.index
+        tz["name"] = tz.index
 
-# Remove NaN (PLACEFP)
-        tz = tz[['NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
-        ct = ct[['NAME', 'ALL', 'SOV', 'BIKE', 'geometry']]
+# Remove NaN (placefp)
+        tz = tz[["name", "all", "sov", "bike", "geometry"]]
+        ct = ct[["name", "all", "sov", "bike", "geometry"]]
         
-        tz['geometry'] = tz['geometry'].simplify(1.0)
-        ct['geometry'] = ct['geometry'].simplify(10.0)
+        tz["geometry"] = tz["geometry"].simplify(1.0)
+        ct["geometry"] = ct["geometry"].simplify(10.0)
 
-        tz.to_crs('EPSG:4326').to_file(path + '/taz.GeoJson', driver='GeoJSON')
-        ct.to_crs('EPSG:4326').to_file(path + '/county.GeoJson', driver='GeoJSON')
+        tz.to_crs("EPSG:4326").to_file(path + "/taz.GeoJson", driver="GeoJSON")
+        ct.to_crs("EPSG:4326").to_file(path + "/county.GeoJson", driver="GeoJSON")
 
 ################################################################################
