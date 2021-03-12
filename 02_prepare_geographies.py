@@ -23,27 +23,27 @@ import stplanpy as stp
 # 06 095 Solano County
 # 06 097 Sonoma County
 
-inDir  = os.path.expanduser("../pct-inputs/01_raw/01_geographies/")
-tmpDir = os.path.expanduser("../pct-inputs/02_intermediate/x_temporary_files/unzip/")
-outDir = os.path.expanduser("../pct-inputs/02_intermediate/01_geographies/")
+in_dir  = os.path.expanduser("../pct-inputs/01_raw/01_geographies/")
+tmp_dir = os.path.expanduser("../pct-inputs/02_intermediate/x_temporary_files/unzip/")
+out_dir = os.path.expanduser("../pct-inputs/02_intermediate/01_geographies/")
 
 ################################################################################
 
 # Boundingbox removes Farallon Islands and puts centroid in the city of San Francisco
 boundingBox = Polygon([(1754027,651503), (1787460,651726), (1792428,624573), (1759497,624405), (1754027,651503)])
 boundingBox = gpd.GeoDataFrame(geometry=[boundingBox], crs="EPSG:2768")
-boundingBox = boundingBox.to_crs("EPSG:3857")
+boundingBox = boundingBox.to_crs("EPSG:6933")
 
 ################################################################################
 # Counties in the Bay Area
 ################################################################################
 
 # Extract to temporal location
-with zipfile.ZipFile(inDir + "county_boundaries/ca-county-boundaries.zip", "r") as zip_ref:
-    zip_ref.extractall(tmpDir)
+with zipfile.ZipFile(in_dir + "county_boundaries/ca-county-boundaries.zip", "r") as zip_ref:
+    zip_ref.extractall(tmp_dir)
 
-county = gpd.read_file(tmpDir + "CA_Counties/CA_Counties_TIGER2016.shp")
-county = county.to_crs("EPSG:3857")
+county = gpd.read_file(tmp_dir + "CA_Counties/CA_Counties_TIGER2016.shp")
+county = county.to_crs("EPSG:6933")
 county.columns = county.columns.str.lower()
 
 # Filter on county codes
@@ -54,36 +54,36 @@ county = county.loc[["001", "013", "041", "055", "075", "081", "085", "095", "09
 county = county[["name", "geometry"]]
 
 # Write to disk
-county.to_crs("EPSG:4326").to_file(outDir + "bayArea_county.GeoJson", driver="GeoJSON")
-county.to_pickle(outDir + "bayArea_county.pkl")
+county.to_crs("EPSG:4326").to_file(out_dir + "bayArea_county.GeoJson", driver="GeoJSON")
+county.to_pickle(out_dir + "bayArea_county.pkl")
 
 # Compute centroids
 county_cent = county.copy()
 county_cent = gpd.overlay(county_cent, boundingBox, how="difference")
 county_cent = county_cent.centroid
-county_cent.to_crs("EPSG:4326").to_file(outDir + "bayArea_county_cent.GeoJson", driver="GeoJSON")
-county_cent.to_pickle(outDir + "bayArea_county_cent.pkl")
+county_cent.to_crs("EPSG:4326").to_file(out_dir + "bayArea_county_cent.GeoJson", driver="GeoJSON")
+county_cent.to_pickle(out_dir + "bayArea_county_cent.pkl")
 
 # Clean up files
-fileList = glob.glob(tmpDir + "CA_Counties/*")
+fileList = glob.glob(tmp_dir + "CA_Counties/*")
 for filePath in fileList:
     try:
         os.remove(filePath)
     except OSError:
         print("Error while deleting file")
 
-os.rmdir(tmpDir + "CA_Counties")
+os.rmdir(tmp_dir + "CA_Counties")
 
 ################################################################################
 # Places in the Bay Area
 ################################################################################
 
 # Extract to temporal location
-with zipfile.ZipFile(inDir + "place_boundaries/tl_2019_06_place.zip", "r") as zip_ref:
-    zip_ref.extractall(tmpDir)
+with zipfile.ZipFile(in_dir + "place_boundaries/tl_2019_06_place.zip", "r") as zip_ref:
+    zip_ref.extractall(tmp_dir)
 
-place = gpd.read_file(tmpDir + "tl_2019_06_place.shp")
-place = place.to_crs("EPSG:3857")
+place = gpd.read_file(tmp_dir + "tl_2019_06_place.shp")
+place = place.to_crs("EPSG:6933")
 place.columns = place.columns.str.lower()
 
 # Rename to Mountain View, Martinez
@@ -111,14 +111,14 @@ place_cent = place_cent.loc[mask]
 place = place[["name", "countyfp", "geometry"]]
 
 # Write to disk
-place.to_crs("EPSG:4326").to_file(outDir + "bayArea_place.GeoJson", driver="GeoJSON")
-place.to_pickle(outDir + "bayArea_place.pkl")
+place.to_crs("EPSG:4326").to_file(out_dir + "bayArea_place.GeoJson", driver="GeoJSON")
+place.to_pickle(out_dir + "bayArea_place.pkl")
 
-place_cent.to_crs("EPSG:4326").to_file(outDir + "bayArea_place_cent.GeoJson", driver="GeoJSON")
-place_cent.to_pickle(outDir + "bayArea_place_cent.pkl")
+place_cent.to_crs("EPSG:4326").to_file(out_dir + "bayArea_place_cent.GeoJson", driver="GeoJSON")
+place_cent.to_pickle(out_dir + "bayArea_place_cent.pkl")
 
 # Clean up files
-fileList = glob.glob(tmpDir + "tl_2019_06_place.*")
+fileList = glob.glob(tmp_dir + "tl_2019_06_place.*")
 for filePath in fileList:
     try:
         os.remove(filePath)
@@ -130,11 +130,11 @@ for filePath in fileList:
 ################################################################################
 
 # Extract to temporal location
-with zipfile.ZipFile(inDir + "taz_boundaries/tl_2011_06_taz10.zip", "r") as zip_ref:
-    zip_ref.extractall(tmpDir)
+with zipfile.ZipFile(in_dir + "taz_boundaries/tl_2011_06_taz10.zip", "r") as zip_ref:
+    zip_ref.extractall(tmp_dir)
 
-taz = gpd.read_file(tmpDir + "tl_2011_06_taz10.shp")
-taz = taz.to_crs("EPSG:3857")
+taz = gpd.read_file(tmp_dir + "tl_2011_06_taz10.shp")
+taz = taz.to_crs("EPSG:6933")
 taz.columns = taz.columns.str.lower()
 taz["placefp"] = np.nan
 taz["area"] = np.nan
@@ -149,7 +149,7 @@ taz.set_index("tazce", inplace=True)
 
 # Compute centroids
 taz_cent = taz.copy()
-taz_cent = taz_cent.to_crs("EPSG:3857")
+taz_cent = taz_cent.to_crs("EPSG:6933")
 taz_cent = taz.centroid
 
 # Define empty datafame
@@ -203,14 +203,14 @@ taz = taz[["countyfp", "placefp", "geometry", "area"]]
 taz = pd.concat([taz, intersect])
 
 # Write to disk
-taz.to_crs("EPSG:4326").to_file(outDir + "bayArea_taz.GeoJson", driver="GeoJSON")
-taz.to_pickle(outDir + "bayArea_taz.pkl")
+taz.to_crs("EPSG:4326").to_file(out_dir + "bayArea_taz.GeoJson", driver="GeoJSON")
+taz.to_pickle(out_dir + "bayArea_taz.pkl")
 
-taz_cent.to_crs("EPSG:4326").to_file(outDir + "bayArea_taz_cent.GeoJson", driver="GeoJSON")
-taz_cent.to_pickle(outDir + "bayArea_taz_cent.pkl")
+taz_cent.to_crs("EPSG:4326").to_file(out_dir + "bayArea_taz_cent.GeoJson", driver="GeoJSON")
+taz_cent.to_pickle(out_dir + "bayArea_taz_cent.pkl")
 
 # Clean up files
-fileList = glob.glob(tmpDir + "tl_2011_06_taz10.*")
+fileList = glob.glob(tmp_dir + "tl_2011_06_taz10.*")
 for filePath in fileList:
     try:
         os.remove(filePath)
