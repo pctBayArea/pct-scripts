@@ -7,7 +7,7 @@ import pandas as pd
 import stplanpy as stp
 
 in_dir = os.path.expanduser("../pct-inputs/02_intermediate/")
-out_dir = os.path.expanduser("../pct-outputs/commute/")
+out_dir = os.path.expanduser("../pct-dash/static/commute/")
 
 ################################################################################
 
@@ -150,8 +150,8 @@ for placefp in place.iterrows():
         tz = tz[["name", "all", "sov", "bike", "go_dutch", "geometry"]]
         pc = pc[["name", "all", "sov", "bike", "go_dutch", "geometry"]]
         
-        tz["geometry"] = tz["geometry"].simplify(1.0)
-        pc["geometry"] = pc["geometry"].simplify(10.0)
+        tz["geometry"] = tz["geometry"].simplify(2.0)
+        pc["geometry"] = pc["geometry"].simplify(20.0)
 
         tz.to_crs("EPSG:4326").to_file(path + "/taz.GeoJson", driver="GeoJSON")
         pc.to_crs("EPSG:4326").to_file(path + "/place.GeoJson", driver="GeoJSON")
@@ -222,8 +222,8 @@ for countyfp in county.iterrows():
         tz = tz[["name", "all", "sov", "bike", "go_dutch", "geometry"]]
         ct = ct[["name", "all", "sov", "bike", "go_dutch", "geometry"]]
         
-        tz["geometry"] = tz["geometry"].simplify(1.0)
-        ct["geometry"] = ct["geometry"].simplify(10.0)
+        tz["geometry"] = tz["geometry"].simplify(2.0)
+        ct["geometry"] = ct["geometry"].simplify(20.0)
 
         tz.to_crs("EPSG:4326").to_file(path + "/taz.GeoJson", driver="GeoJSON")
         ct.to_crs("EPSG:4326").to_file(path + "/county.GeoJson", driver="GeoJSON")

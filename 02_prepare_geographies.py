@@ -152,6 +152,37 @@ taz_cent = taz.copy()
 taz_cent = taz_cent.to_crs("EPSG:6933")
 taz_cent = taz.centroid
 
+# Correct centroid locations
+# Google plex
+taz_corr = Point(-122.07805259936053, 37.42332894065777)
+taz_corr = gpd.GeoDataFrame(geometry=[taz_corr], crs="EPSG:4326")
+taz_corr = taz_corr.to_crs("EPSG:6933")
+taz_cent.loc["00101155"] = taz_corr["geometry"].values[0]
+
+# Stanford research park
+taz_corr = Point(-122.14512495139151, 37.407136806684605)
+taz_corr = gpd.GeoDataFrame(geometry=[taz_corr], crs="EPSG:4326")
+taz_corr = taz_corr.to_crs("EPSG:6933")
+taz_cent.loc["00100480"] = taz_corr["geometry"].values[0]
+
+# Facebook
+taz_corr = Point(-122.1487037864525, 37.48492337393505)
+taz_corr = gpd.GeoDataFrame(geometry=[taz_corr], crs="EPSG:4326")
+taz_corr = taz_corr.to_crs("EPSG:6933")
+taz_cent.loc["00102130"] = taz_corr["geometry"].values[0]
+
+# Alviso
+taz_corr = Point(-121.96984835449749, 37.42903692638468)
+taz_corr = gpd.GeoDataFrame(geometry=[taz_corr], crs="EPSG:4326")
+taz_corr = taz_corr.to_crs("EPSG:6933")
+taz_cent.loc["00101013"] = taz_corr["geometry"].values[0]
+
+# Newark
+taz_corr = Point(-122.04629989984038, 37.52303561234163)
+taz_corr = gpd.GeoDataFrame(geometry=[taz_corr], crs="EPSG:4326")
+taz_corr = taz_corr.to_crs("EPSG:6933")
+taz_cent.loc["00103259"] = taz_corr["geometry"].values[0]
+
 # Define empty datafame
 intersect = pd.DataFrame()
 

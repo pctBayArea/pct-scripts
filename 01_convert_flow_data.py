@@ -9,6 +9,8 @@ import pandas as pd
 import numpy  as np
 import stplanpy as stp
 
+################################################################################
+
 in_dir = os.path.expanduser("../pct-inputs/01_raw/")
 out_dir = os.path.expanduser("../pct-inputs/02_intermediate/")
 
@@ -27,6 +29,7 @@ counties = [
 
 init = True
 
+# Read all acs csv files and merge them into one dataframe
 for county in counties:
     print(county)
 
@@ -43,59 +46,8 @@ for county in counties:
 
             flow_data = pd.concat([flow_data, temp_data], ignore_index=True)
 
-# Define some groups    
-flow_data["active"] = (
-    + flow_data["walk"] 
-    + flow_data["bike"])
-flow_data["transit"] = (
-    + flow_data["bus"] 
-    + flow_data["streetcar"] 
-    + flow_data["subway"] 
-    + flow_data["railroad"] 
-    + flow_data["ferry"])
-flow_data["carpool"] = (
-    + flow_data["car_2p"]
-    + flow_data["car_3p"]
-    + flow_data["car_4p"]
-    + flow_data["car_5p"]
-    + flow_data["car_7p"])
-
-# People working from home do not travel    
-flow_data["all"] = flow_data["all"] - flow_data["home"]
-
-# Columns to keep
-flow_data = flow_data[[
-    "orig_taz", 
-    "dest_taz", 
-    "all", 
-    "home", 
-    "walk", 
-    "bike", 
-    "sov", 
-    "active", 
-    "transit", 
-    "carpool"]]
-
-## Add return data for commute trips per day
-#fd = flow_data.copy()
-#fd = fd[[
-#    "dest_taz", 
-#    "orig_taz", 
-#    "all", 
-#    "home", 
-#    "walk", 
-#    "bike", 
-#    "sov", 
-#    "active", 
-#    "transit", 
-#    "carpool"]]
-#fd.rename(columns = {
-#    "dest_taz":"orig_taz", 
-#    "orig_taz":"dest_taz"}, inplace = True)
-#flow_data = pd.concat([flow_data, fd], ignore_index=True)
-
-# Fix index
-flow_data = flow_data.reset_index(drop=True)
+# Clean up acs flow data
+flow_data = flow_data.clean_acs()
 
 # Write data to disk
 flow_data.to_pickle(out_dir + "02_travel_data/commute/flow_data.pkl")
