@@ -23,16 +23,11 @@ import stplanpy as stp
 # 06 095 Solano County
 # 06 097 Sonoma County
 
+################################################################################
+
 in_dir  = os.path.expanduser("../pct-inputs/01_raw/01_geographies/")
 tmp_dir = os.path.expanduser("../pct-inputs/02_intermediate/x_temporary_files/unzip/")
 out_dir = os.path.expanduser("../pct-inputs/02_intermediate/01_geographies/")
-
-################################################################################
-
-# Boundingbox removes Farallon Islands and puts centroid in the city of San Francisco
-boundingBox = Polygon([(1754027,651503), (1787460,651726), (1792428,624573), (1759497,624405), (1754027,651503)])
-boundingBox = gpd.GeoDataFrame(geometry=[boundingBox], crs="EPSG:2768")
-boundingBox = boundingBox.to_crs("EPSG:6933")
 
 ################################################################################
 # Counties in the Bay Area
@@ -59,8 +54,15 @@ county.to_pickle(out_dir + "bayArea_county.pkl")
 
 # Compute centroids
 county_cent = county.copy()
-county_cent = gpd.overlay(county_cent, boundingBox, how="difference")
 county_cent = county_cent.centroid
+
+# Correct centroid locations
+# San Franciscor (ignore Farallon Islands)
+county_corr = Point(-122.44790202662216, 37.75659353337424)
+county_corr = gpd.GeoDataFrame(geometry=[county_corr], crs="EPSG:4326")
+county_corr = county_corr.to_crs("EPSG:6933")
+county_cent.loc["075"] = county_corr["geometry"].values[0]
+
 county_cent.to_crs("EPSG:4326").to_file(out_dir + "bayArea_county_cent.GeoJson", driver="GeoJSON")
 county_cent.to_pickle(out_dir + "bayArea_county_cent.pkl")
 
@@ -94,8 +96,14 @@ place["countyfp"] = np.nan
 
 # Compute centroids
 place_cent = place.copy()
-place_cent = gpd.overlay(place_cent, boundingBox, how="difference")
 place_cent = place_cent.centroid
+
+# Correct centroid locations
+# San Franciscor (ignore Farallon Islands)
+place_corr = Point(-122.44790202662216, 37.75659353337424)
+place_corr = gpd.GeoDataFrame(geometry=[place_corr], crs="EPSG:4326")
+place_corr = place_corr.to_crs("EPSG:6933")
+place_cent.loc["67000"] = place_corr["geometry"].values[0]
 
 # iterate over counties and check whether places are within them
 for countyfp in county.iterrows():

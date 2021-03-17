@@ -4,7 +4,10 @@ import os
 import glob
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 import stplanpy as stp
+
+import time
 
 in_dir = os.path.expanduser("../pct-inputs/02_intermediate/")
 out_dir = os.path.expanduser("../pct-dash/static/commute/")
@@ -54,11 +57,16 @@ else:
             flow_data.loc[(flow_data["orig_taz"] == i), "orig_plc"] = plcfp
             flow_data.loc[(flow_data["dest_taz"] == i), "dest_plc"] = plcfp
 
-# Compute origin destination lines and distances
-    flow_data = stp.od_lines(flow_data, taz_cent)
+# Compute origin destination lines, distances, and gradient
+    flow_data["geometry"] = flow_data.od_lines(taz_cent)
+    flow_data["distance"] = flow_data.distances()
+    flow_data["gradient"] = 0.0
 
 # Compute go_dutch scenario
-    flow_data["go_dutch"] = stp.go_dutch(flow_data)
+    flow_data["go_dutch"] = flow_data.go_dutch()
+
+    flow_data = gpd.GeoDataFrame(flow_data)
+    flow_data = flow_data.set_crs("EPSG:6933")
 
     flow_data.to_pickle("flow_data.pkl")
 
