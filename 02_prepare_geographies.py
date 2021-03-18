@@ -9,7 +9,6 @@ import zipfile
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Point, Polygon, MultiPolygon, GeometryCollection
 import stplanpy as stp
 
 # Bay Area county codes
@@ -58,10 +57,7 @@ county_cent = county_cent.centroid
 
 # Correct centroid locations
 # San Franciscor (ignore Farallon Islands)
-county_corr = Point(-122.44790202662216, 37.75659353337424)
-county_corr = gpd.GeoDataFrame(geometry=[county_corr], crs="EPSG:4326")
-county_corr = county_corr.to_crs("EPSG:6933")
-county_cent.loc["075"] = county_corr["geometry"].values[0]
+county_cent.loc["075"] = stp.corr_cent(-122.44790202662216, 37.75659353337424)
 
 county_cent.to_crs("EPSG:4326").to_file(out_dir + "bayArea_county_cent.GeoJson", driver="GeoJSON")
 county_cent.to_pickle(out_dir + "bayArea_county_cent.pkl")
@@ -100,10 +96,7 @@ place_cent = place_cent.centroid
 
 # Correct centroid locations
 # San Franciscor (ignore Farallon Islands)
-place_corr = Point(-122.44790202662216, 37.75659353337424)
-place_corr = gpd.GeoDataFrame(geometry=[place_corr], crs="EPSG:4326")
-place_corr = place_corr.to_crs("EPSG:6933")
-place_cent.loc["67000"] = place_corr["geometry"].values[0]
+place_cent.loc["67000"] = stp.corr_cent(-122.44790202662216, 37.75659353337424)
 
 # iterate over counties and check whether places are within them
 for countyfp in county.iterrows():
@@ -162,34 +155,15 @@ taz_cent = taz.centroid
 
 # Correct centroid locations
 # Google plex
-taz_corr = Point(-122.07805259936053, 37.42332894065777)
-taz_corr = gpd.GeoDataFrame(geometry=[taz_corr], crs="EPSG:4326")
-taz_corr = taz_corr.to_crs("EPSG:6933")
-taz_cent.loc["00101155"] = taz_corr["geometry"].values[0]
-
+taz_cent.loc["00101155"] = stp.corr_cent(-122.07805259936053, 37.42332894065777)
 # Stanford research park
-taz_corr = Point(-122.14512495139151, 37.407136806684605)
-taz_corr = gpd.GeoDataFrame(geometry=[taz_corr], crs="EPSG:4326")
-taz_corr = taz_corr.to_crs("EPSG:6933")
-taz_cent.loc["00100480"] = taz_corr["geometry"].values[0]
-
+taz_cent.loc["00100480"] = stp.corr_cent(-122.14512495139151, 37.407136806684605)
 # Facebook
-taz_corr = Point(-122.1487037864525, 37.48492337393505)
-taz_corr = gpd.GeoDataFrame(geometry=[taz_corr], crs="EPSG:4326")
-taz_corr = taz_corr.to_crs("EPSG:6933")
-taz_cent.loc["00102130"] = taz_corr["geometry"].values[0]
-
+taz_cent.loc["00102130"] = stp.corr_cent(-122.1487037864525, 37.48492337393505)
 # Alviso
-taz_corr = Point(-121.96984835449749, 37.42903692638468)
-taz_corr = gpd.GeoDataFrame(geometry=[taz_corr], crs="EPSG:4326")
-taz_corr = taz_corr.to_crs("EPSG:6933")
-taz_cent.loc["00101013"] = taz_corr["geometry"].values[0]
-
+taz_cent.loc["00101013"] = stp.corr_cent(-121.96984835449749, 37.42903692638468)
 # Newark
-taz_corr = Point(-122.04629989984038, 37.52303561234163)
-taz_corr = gpd.GeoDataFrame(geometry=[taz_corr], crs="EPSG:4326")
-taz_corr = taz_corr.to_crs("EPSG:6933")
-taz_cent.loc["00103259"] = taz_corr["geometry"].values[0]
+taz_cent.loc["00103259"] = stp.corr_cent(-122.04629989984038, 37.52303561234163)
 
 # Define empty datafame
 intersect = pd.DataFrame()
