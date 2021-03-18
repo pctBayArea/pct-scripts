@@ -70,7 +70,7 @@ else:
 
     flow_data.to_pickle("flow_data.pkl")
 
-stp.plot_dist(flow_data, out_dir)
+#stp.plot_dist(flow_data, out_dir)
 
 ################################################################################
 
@@ -172,7 +172,7 @@ for placefp in place.iterrows():
         if not os.path.isdir(path):
             os.mkdir(path)
 
-        stp.plot_dist(fd, path)
+#        stp.plot_dist(fd, path)
 
         fd = fd[["all", "bike", "go_dutch", "geometry", "distance", "gradient"]]
         fd = fd.loc[fd["distance"] > 0]
@@ -244,7 +244,7 @@ for countyfp in county.iterrows():
         if not os.path.isdir(path):
             os.mkdir(path)
 
-        stp.plot_dist(fd, path)
+#        stp.plot_dist(fd, path)
 
         fd = fd[["all", "bike", "go_dutch", "geometry", "distance", "gradient"]]
         fd = fd.loc[fd["distance"] > 0]
