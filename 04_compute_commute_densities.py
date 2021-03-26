@@ -12,6 +12,8 @@ import time
 in_dir = os.path.expanduser("../pct-inputs/02_intermediate/")
 out_dir = os.path.expanduser("../pct-dash/static/commute/")
 
+os.makedirs(out_dir, exist_ok=True)
+
 ################################################################################
 
 if os.path.isfile("flow_data.pkl"):
@@ -29,6 +31,7 @@ else:
 # Read taz data
     taz = pd.read_pickle(in_dir + "01_geographies/bayArea_taz.pkl")
     taz_cent = pd.read_pickle(in_dir + "01_geographies/bayArea_taz_cent.pkl")
+    taz_elev = pd.read_pickle(in_dir + "03_elevation/bayArea_taz_elev.pkl")
 
 # Add county and place codes to data frame. This data is used to compute mode
 # share in counties and places
@@ -60,7 +63,7 @@ else:
 # Compute origin destination lines, distances, and gradient
     flow_data["geometry"] = flow_data.od_lines(taz_cent)
     flow_data["distance"] = flow_data.distances()
-    flow_data["gradient"] = 0.0
+    flow_data["gradient"] = flow_data.gradient(taz_elev)   
 
 # Compute go_dutch scenario
     flow_data["go_dutch"] = flow_data.go_dutch()

@@ -28,6 +28,9 @@ in_dir  = os.path.expanduser("../pct-inputs/01_raw/01_geographies/")
 tmp_dir = os.path.expanduser("../pct-inputs/02_intermediate/x_temporary_files/unzip/")
 out_dir = os.path.expanduser("../pct-inputs/02_intermediate/01_geographies/")
 
+os.makedirs(tmp_dir, exist_ok=True)
+os.makedirs(out_dir, exist_ok=True)
+
 ################################################################################
 # Counties in the Bay Area
 ################################################################################

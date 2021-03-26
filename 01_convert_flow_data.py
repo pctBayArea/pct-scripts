@@ -14,6 +14,8 @@ import stplanpy as stp
 in_dir = os.path.expanduser("../pct-inputs/01_raw/")
 out_dir = os.path.expanduser("../pct-inputs/02_intermediate/")
 
+os.makedirs(out_dir, exist_ok=True)
+
 ################################################################################
 
 counties = [
