@@ -5,9 +5,10 @@ import glob
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import stplanpy as stp
-
-import time
+#import stplanpy as stp
+from stplanpy import od
+from stplanpy import distributions
+#import time
 
 in_dir = os.path.expanduser("../pct-inputs/02_intermediate/")
 out_dir = os.path.expanduser("../pct-dash/static/commute/")
@@ -44,6 +45,8 @@ else:
 
     for i, tz in taz_cnt.iterrows():
         cntfp = tz["countyfp"]
+#        print(i)
+#        print(cntfp)
 
         flow_data.loc[(flow_data["orig_taz"] == i), "orig_cnt"] = cntfp
         flow_data.loc[(flow_data["dest_taz"] == i), "dest_cnt"] = cntfp
@@ -56,6 +59,8 @@ else:
 # this place.
         if (tz['area'] > 0.5):
             plcfp = tz["placefp"]
+#            print(i)
+#            print(plcfp)
             
             flow_data.loc[(flow_data["orig_taz"] == i), "orig_plc"] = plcfp
             flow_data.loc[(flow_data["dest_taz"] == i), "dest_plc"] = plcfp
