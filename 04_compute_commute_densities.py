@@ -11,7 +11,7 @@ from stplanpy import distributions
 #import time
 
 in_dir = os.path.expanduser("../pct-inputs/02_intermediate/")
-out_dir = os.path.expanduser("../pct-dash/static/commute/")
+out_dir = os.path.expanduser("../pct-outputs/static/commute/")
 
 os.makedirs(out_dir, exist_ok=True)
 
@@ -173,21 +173,27 @@ for placefp in place.iterrows():
         pc.to_crs("EPSG:4326").to_file(path + "/place.GeoJson", driver="GeoJSON")
 
     fd = flow_data.loc[(flow_data["orig_plc"] == placefp[0]) | (flow_data["dest_plc"] == placefp[0])]
-    if not fd.empty:
-        name = place.loc[placefp[0], "name"]
-        name = name.replace(" ","")
-        path = out_dir + "place/" + name 
-        if not os.path.isdir(path):
-            os.mkdir(path)
+    
+    name = place.loc[placefp[0], "name"]
+    name = name.replace(" ","")
+    path = out_dir + "place/" + name 
+    if not os.path.isdir(path):
+        os.mkdir(path)
 
 #        stp.plot_dist(fd, path)
 
-        fd = fd[["all", "bike", "go_dutch", "geometry", "distance", "gradient"]]
+    fd = fd[["all", "bike", "go_dutch", "geometry", "distance", "gradient"]]
+    if not fd.empty:
         fd = fd.loc[fd["distance"] > 0]
         fd = fd.loc[fd["distance"] < 30000]
         fd = fd.nlargest(100, "bike")
         fd.to_crs("EPSG:4326").to_file(path + "/line.GeoJson", driver="GeoJSON")
-        fd.to_pickle(path + "/line.pkl")
+    else:
+        ar = np.empty([100,6])
+        ar[:,:] = np.nan
+        fd = pd.DataFrame(data=ar, columns=fd.columns)
+
+    fd.to_pickle(path + "/line.pkl")
 
 ################################################################################
 
@@ -245,20 +251,26 @@ for countyfp in county.iterrows():
         ct.to_crs("EPSG:4326").to_file(path + "/county.GeoJson", driver="GeoJSON")
 
     fd = flow_data.loc[(flow_data["orig_cnt"] == countyfp[0]) | (flow_data["dest_cnt"] == countyfp[0])]
-    if not fd.empty:
-        name = county.loc[countyfp[0], "name"]
-        name = name.replace(" ","")
-        path = out_dir + "county/" + name 
-        if not os.path.isdir(path):
-            os.mkdir(path)
+    
+    name = county.loc[countyfp[0], "name"]
+    name = name.replace(" ","")
+    path = out_dir + "county/" + name 
+    if not os.path.isdir(path):
+        os.mkdir(path)
 
 #        stp.plot_dist(fd, path)
 
-        fd = fd[["all", "bike", "go_dutch", "geometry", "distance", "gradient"]]
+    fd = fd[["all", "bike", "go_dutch", "geometry", "distance", "gradient"]]
+    if not fd.empty:
         fd = fd.loc[fd["distance"] > 0]
         fd = fd.loc[fd["distance"] < 30000]
         fd = fd.nlargest(100, "bike")
         fd.to_crs("EPSG:4326").to_file(path + "/line.GeoJson", driver="GeoJSON")
-        fd.to_pickle(path + "/line.pkl")
+    else:
+        ar = np.empty([100,6])
+        ar[:,:] = np.nan
+        fd = pd.DataFrame(data=ar, columns=fd.columns)
+
+    fd.to_pickle(path + "/line.pkl")
 
 ################################################################################
