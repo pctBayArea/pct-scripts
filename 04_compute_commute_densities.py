@@ -189,7 +189,7 @@ for placefp in place.iterrows():
         fd = fd.nlargest(100, "bike")
         fd.to_crs("EPSG:4326").to_file(path + "/line.GeoJson", driver="GeoJSON")
     else:
-        ar = np.empty([100,6])
+        ar = np.empty([1,6])
         ar[:,:] = np.nan
         fd = pd.DataFrame(data=ar, columns=fd.columns)
 
@@ -267,7 +267,7 @@ for countyfp in county.iterrows():
         fd = fd.nlargest(100, "bike")
         fd.to_crs("EPSG:4326").to_file(path + "/line.GeoJson", driver="GeoJSON")
     else:
-        ar = np.empty([100,6])
+        ar = np.empty([1,6])
         ar[:,:] = np.nan
         fd = pd.DataFrame(data=ar, columns=fd.columns)
 
