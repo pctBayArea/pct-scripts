@@ -31,13 +31,13 @@ with zipfile.ZipFile(in_dir + "srtm_12_05.zip", "r") as zip_ref:
     zip_ref.extractall(tmp_dir)
 
 # Reproject elevation data
-elev.reproj(tmp_dir+"srtm_12_05.tif", out_dir + "03_elevation/srtm_12_05.wgs85.tif")
+elev.reproj(tmp_dir+"srtm_12_05.tif", out_dir + "03_elevation/srtm_12_05_EPSG6933.tif")
 
 # Read TAZ centroids
 taz_cent = pd.read_pickle(out_dir + "01_geographies/bayArea_taz_cent.pkl")
 
 # Compute elevation and create dataframe
-points = point_query(taz_cent, out_dir + "03_elevation/srtm_12_05.wgs84.tif")
+points = point_query(taz_cent, out_dir + "03_elevation/srtm_12_05_EPSG6933.tif")
 
 # Create dataframe and write to pickle
 taz_elev = pd.DataFrame(points, columns = ["elevation"], index=taz_cent.index)
