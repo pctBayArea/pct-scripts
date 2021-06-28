@@ -36,34 +36,33 @@ else:
 
 # Add county and place codes to data frame. This data is used to compute mode
 # share in counties and places
-    flow_data["orig_cnt"] = ""
-    flow_data["dest_cnt"] = ""
-    flow_data["orig_plc"] = ""
-    flow_data["dest_plc"] = ""
 
-    taz_cnt = taz.dropna(subset=["countyfp"])
+    flow_data = flow_data.orig_dest(taz)
 
-    for i, tz in taz_cnt.iterrows():
-        cntfp = tz["countyfp"]
-#        print(i)
-#        print(cntfp)
-
-        flow_data.loc[(flow_data["orig_taz"] == i), "orig_cnt"] = cntfp
-        flow_data.loc[(flow_data["dest_taz"] == i), "dest_cnt"] = cntfp
-
-    taz_plc = taz.dropna(subset=["placefp"])
-
-    for i, tz in taz_plc.iterrows():
-# We do not know the distribution of origins or destinations within a TAZ.
-# Therefore, add TAZ to place if more than 0.5 of its surface area is within
-# this place.
-        if (tz['area'] > 0.5):
-            plcfp = tz["placefp"]
-#            print(i)
-#            print(plcfp)
-            
-            flow_data.loc[(flow_data["orig_taz"] == i), "orig_plc"] = plcfp
-            flow_data.loc[(flow_data["dest_taz"] == i), "dest_plc"] = plcfp
+#    taz_cnt = taz.dropna(subset=["countyfp"])
+#
+#    flow_data["orig_cnt"] = ""
+#    flow_data["dest_cnt"] = ""
+#    flow_data["orig_plc"] = ""
+#    flow_data["dest_plc"] = ""
+#
+#    for i, tz in taz_cnt.iterrows():
+#        cntfp = tz["countyfp"]
+#
+#        flow_data.loc[(flow_data["orig_taz"] == i), "orig_cnt"] = cntfp
+#        flow_data.loc[(flow_data["dest_taz"] == i), "dest_cnt"] = cntfp
+#
+#    taz_plc = taz.dropna(subset=["placefp"])
+#
+#    for i, tz in taz_plc.iterrows():
+## We do not know the distribution of origins or destinations within a TAZ.
+## Therefore, add TAZ to place if more than 0.5 of its surface area is within
+## this place.
+#        if (tz['area'] > 0.5):
+#            plcfp = tz["placefp"]
+#
+#            flow_data.loc[(flow_data["orig_taz"] == i), "orig_plc"] = plcfp
+#            flow_data.loc[(flow_data["dest_taz"] == i), "dest_plc"] = plcfp
 
 # Compute origin destination lines, distances, and gradient
     flow_data["geometry"] = flow_data.od_lines(taz_cent)
